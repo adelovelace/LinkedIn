@@ -34,6 +34,8 @@ link_cities.each do |link|
     work = parsed_content.css('.jobs-search__results-list').css('.base-card')
 
     work.each do |post|
+        puts post
+
         work_name = post.css('.sr-only').inner_text.strip  
         subtitle = post.css('.base-search-card__subtitle').inner_text.strip
         location= post.css('.job-search-card__location').inner_text.strip

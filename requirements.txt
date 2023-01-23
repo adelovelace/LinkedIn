@@ -1,0 +1,8 @@
+notebook
+openpyxl
+pandas
+matplotlib
+seaborn
+plotly
+dash
+dash-cytoscape
