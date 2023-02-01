@@ -5,22 +5,31 @@ require 'csv' # escribir y leer csv
 require 'time'
 
 class Works
-    attr_accessor :name, :location, :time_post, :actual_applications, :description
+    attr_accessor :card_work_info, :job_title, :info_company, :company_name, :location, :working_mode, :time_post, :current_applications, :description
   
-    def initialize(name, location, time_post, actual_applications, description)
-      @name = name
+    def initialize(card_work_info,job_title,info_company,company_name, location,working_mode, time_post, current_applications, description)
+      @card_work_info = card_work_info
+      @job_title = job_title
+      @info_company = info_company
+      @company_name = company_name
       @location = location
+      @working_mode = working_mode
       @time_post = time_post
-      @actual_applications = actual_applications
+      @current_applications = current_applications
       @description = description
     end
     
-    def guardar(name, location, time_post, actual_applications, description)
+    def save_job(card_work_info,job_title,info_company,company_name,location, working_mode,time_post, current_applications, description)
         CSV.open('works.csv', 'a') do |csv|
-            csv << [name, location, time_post,actual_applications,description]
+            csv << [card_work_info,job_title,info_company,company_name,location, working_mode,time_post, current_applications, description]
         end
     end
 end
+
+CSV.open('works.csv', 'a') do |csv|
+    csv << ["Card Job info","Job Title","Company Info","Company Name","Location", "Working mode","Time post", "Current Applicants", "Job Description"]
+end
+
 
 driver = Selenium::WebDriver.for:firefox
 
@@ -36,9 +45,9 @@ driver.find_element(:class,"btn__primary--large").click
 sleep 5
 
 
-link_cities = ["https://www.linkedin.com/jobs/search?keywords=computer%2Bscience&location=Berlin%2C%2BBerlin%2C%2BDeutschland&geoId=106967730&trk=public_jobs_jobs-search-bar_search-submit&currentJobId=3422463190&position=4&pageNum=0",
-                "https://www.linkedin.com/jobs/search?keywords=Computer%2Bscience&location=Frankfurt%2C+Hessen%2C+Deutschland&geoId=106772406&trk=public_jobs_jobs-search-bar_search-submit&currentJobId=3422463190&position=4&pageNum=0",
-                "https://www.linkedin.com/jobs/search?keywords=Computer%2Bscience&location=M%C3%BCnchen%2C+Bayern%2C+Deutschland&geoId=100477049&trk=public_jobs_jobs-search-bar_search-submit&currentJobId=3422463190&position=4&pageNum=0"]
+link_cities = ["https://www.linkedin.com/jobs/search/?currentJobId=3456041982&distance=0&geoId=106967730&keywords=computer%2Bscience&location=Berlin%2C%20Berlin%2C%20Germany&refresh=true",
+                "https://www.linkedin.com/jobs/search/?currentJobId=3452194885&geoId=106150090&keywords=computer%2Bscience&location=Frankfurt%20am%20Main%2C%20Hesse%2C%20Germany&refresh=true",
+                "https://www.linkedin.com/jobs/search/?currentJobId=3456041982&distance=0&geoId=100477049&keywords=computer%2Bscience&location=Munich%2C%20Bavaria%2C%20Germany&refresh=true"]
 
 
 link_cities.each do |link|
@@ -52,59 +61,75 @@ link_cities.each do |link|
 
     n = 0
     jobs_list.each do |job|
+
+        begin
         
-        wait = Selenium::WebDriver::Wait.new(:timeout => 30)
-        n +=1 
-        driver.execute_script("arguments[0].scrollIntoView();", jobs_list[n-1])
-        wait = Selenium::WebDriver::Wait.new(:timeout => 60)
-        puts "__________"
-        puts n.to_s + " " + job.text
-        job.click
+            wait = Selenium::WebDriver::Wait.new(:timeout => 30)
+            n +=1 
+            driver.execute_script("arguments[0].scrollIntoView();", jobs_list[n-1])
+            wait = Selenium::WebDriver::Wait.new(:timeout => 60)
+            card_info = job.text
+            puts "_____Card Info_____"
+            puts n.to_s + " " + card_info
+            puts "__________"
+            job.click
 
-        sleep 2
+            sleep 2
+            
+            #obtiene toda la descripción del trabajo
+            temp = driver.find_element(:class,'jobs-search__job-details--container')
+
+            #get the title of the job
+            work_name = temp.find_element(:xpath, '/html/body/div[5]/div[3]/div[4]/div/div/main/div/section[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/a/h2')
+            puts "Titulo del trabajo: " + work_name.text 
+            
+            sleep 2
+            
+            #get location of the job
+            info_company = temp.find_element(:xpath, '/html/body/div[5]/div[3]/div[4]/div/div/main/div/section[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[1]/span[1]')
+            puts "Info de empresa : " + info_company.text
+
+            company = temp.find_element(:xpath,'//*[@id="ember133"]')
+            puts "Empresa: " + company.text
+
+            location = temp.find_element(:xpath,'/html/body/div[5]/div[3]/div[4]/div/div/main/div/section[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[1]/span[1]/span[2]')
+            puts "Localización: " + location.text
+
+            working_mode = temp.find_element(:xpath, '/html/body/div[5]/div[3]/div[4]/div/div/main/div/section[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[1]/span[1]/span[3]')
+            puts "Modo de trabajo: " + working_mode.text
+
+            sleep 2
+
+            #time of the posted 
+            time_post = temp.find_element(:xpath,'/html/body/div[5]/div[3]/div[4]/div/div/main/div/section[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[1]/span[2]/span[1]')
+            puts "Tiempo de posteo: " + time_post.text     
+
+            sleep 2
+
+            #applications until the extraction
+            current_applications = temp.find_element(:xpath, '/html/body/div[5]/div[3]/div[4]/div/div/main/div/section[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[1]/span[2]/span[2]')
+            puts "Aplicantes actuales: " + current_applications.text
+
+            sleep 2
+
+            #get the job description
+            # description = temp.find_element(:xpath, '/html/body/div[5]/div[3]/div[4]/div/div/main/div/section[2]/div/div[2]/div[1]/div/div[2]/article/div')
+            description = temp.find_element(:id, 'job-details')
+            puts "Descripción:  \n"
+            puts description.text
         
-        #obtiene toda la descripción del trabajo 
-        temp = driver.find_element(:class,'jobs-search__job-details--container')
-        # puts temp
+            puts "\n"
 
-        #get the title of the job
-        work_name = temp.find_element(:xpath, '/html/body/div[5]/div[3]/div[4]/div/div/main/div/section[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/a/h2')
-        puts "Titulo del trabajo: " + work_name.text
+            sleep 2
 
-        sleep 2
-        
-        #get location of the job
-        location = temp.find_element(:xpath, '/html/body/div[5]/div[3]/div[4]/div/div/main/div/section[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[1]/span[1]')
-        puts "Localidad del trabajo: " + location.text
+            works  = Works.new(card_info,work_name.text,info_company.text,company.text,location.text,working_mode.text, time_post.text, current_applications.text, description.text)
+            works.save_job(card_info,work_name.text,info_company.text,company.text, location.text,working_mode.text, time_post.text, current_applications.text, description.text)
 
-        sleep 2
-
-        #time of the posted 
-        time_post = temp.find_element(:xpath,'/html/body/div[5]/div[3]/div[4]/div/div/main/div/section[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[1]/span[2]/span[1]')
-        puts "Tiempo de posteo: " + time_post.text
-
-        sleep 2
-
-        #applications until the extraction
-        actual_applications = temp.find_element(:xpath, '/html/body/div[5]/div[3]/div[4]/div/div/main/div/section[2]/div/div[2]/div[1]/div/div[1]/div/div[1]/div[1]/div[1]/span[2]/span[2]')
-        puts "Aplicates actuales: " + actual_applications.text
-
-        sleep 2
-
-        #get the job description
-        description = temp.find_element(:xpath, '//*[@id="job-details"]')
-        puts "Description \n"
-        puts description.text
-
-        puts "\n"
-
-        sleep 2
-
-        works  = Works.new(work_name.text, location.text, time_post.text, actual_applications.text, description.text)
-        works.guardar(work_name.text, location.text, time_post.text, actual_applications.text, description.text)
-
-        wait = Selenium::WebDriver::Wait.new(:timeout => 60)
-    
+            wait = Selenium::WebDriver::Wait.new(:timeout => 60)
+        rescue Exception => e
+            puts e 
+            puts "Do not found"
+        end
     end
 
    
